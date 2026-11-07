@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in | AU StudentSphere</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-page">
+    <main class="auth-shell">
+        <a class="brand auth-brand" href="{{ url_for('auth') }}">
+            <img class="auth-logo" src="{{ url_for('static', filename='images/africa-university-logo.png') }}" alt="Africa University logo">
+            <span><strong>AU StudentSphere</strong><small>STUDENT SUCCESS</small></span>
+        </a>
+        <header class="auth-heading">
+            <span class="overline">AFRICA UNIVERSITY</span>
+            <h1>Your achievements, in one place.</h1>
+            <p>Sign in to track verified achievements or create a student account to get started.</p>
+        </header>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}<div class="notice success" role="status">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}
+        {% endwith %}
+        {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+        <div class="auth-grid">
+            <section class="auth-card">
+                <h2>Sign in</h2>
+                <p>Access your StudentSphere account.</p>
+                <form action="{{ url_for('login') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                    <label class="field">University email
+                        <input type="email" name="email" autocomplete="username" required>
+                    </label>
+                    <label class="field">Password
+                        <input type="password" name="password" autocomplete="current-password" required>
+                    </label>
+                    <button class="btn-primary auth-submit" type="submit">Sign in</button>
+                </form>
+            </section>
+            <section class="auth-card">
+                <h2>Create a student account</h2>
+                <p>Student registration is open. Staff accounts are issued by an administrator.</p>
+                <form action="{{ url_for('register') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="field">Full name
+                        <input name="name" maxlength="100" autocomplete="name" required>
+                    </label>
+                    <label class="field">University email
+                        <input type="email" name="email" autocomplete="email" required>
+                    </label>
+                    <label class="field">Password
+                        <input type="password" name="password" minlength="12" autocomplete="new-password" required>
+                        <small>Use at least 12 characters.</small>
+                    </label>
+                    <button class="btn-primary auth-submit" type="submit">Create student account</button>
+                </form>
+            </section>
+        </div>
+        <p class="auth-note">Your account is private. Only authorized university staff can review submissions.</p>
+    </main>
+</body>
+</html>

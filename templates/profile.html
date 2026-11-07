@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AU StudentSphere - My Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <!-- FIXED LOGO PATH -->
+            <img src="{{ url_for('static', filename='images/africa-university-logo.png') }}" alt="AU Logo" class="brand-logo">
+            <div class="brand-text">
+                <strong>Student<br>Sphere</strong>
+                <span>VERIFIED RECORD</span>
+            </div>
+        </div>
+
+        <div class="user-role-card" style="background: transparent; padding: 0; padding-left: 0.5rem;">
+            <span class="label" style="margin-bottom: 0;">STUDENT WORKSPACE</span>
+        </div>
+
+        <nav class="nav-menu" style="margin-top: 1rem;">
+            <a href="{{ url_for('profile') }}" class="nav-item active"><i class="fa-regular fa-user"></i> My profile</a>
+            <a href="{{ url_for('index') }}" class="nav-item"><i class="fa-solid fa-award"></i> Achievements</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="avatar">{{ current_user.name[:2] | upper }}</div>
+                <div class="user-details">
+                    <strong>{{ current_user.name }}</strong>
+                    <span>{{ current_user.email }}</span>
+                </div>
+            </div>
+            <form action="{{ url_for('logout') }}" method="POST" style="margin-top: 10px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="nav-item" style="background:none; border:none; width:100%; text-align:left; cursor:pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign out
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="content-wrapper" style="padding-top: 3rem;">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if error %}<div class="error-message">{{ error }}</div>{% endif %}
+
+            <div class="page-header">
+                <div>
+                    <span class="overline">MY PROFILE</span>
+                    <h1>Profile overview</h1>
+                    <p class="subtitle">The complete, verified story of your Africa University journey.</p>
+                </div>
+                {% if is_owner %}
+                    <button class="btn-outline" onclick="document.getElementById('editProfileForm').classList.toggle('hidden')">Edit Profile</button>
+                {% endif %}
+            </div>
+
+            <div class="profile-banner">
+                <div class="avatar-large">{{ profile.name[:2] | upper }}</div>
+                <div class="profile-info">
+                    <h2>
+                        {{ profile.name }} 
+                        {% if profile.profile_shared %}
+                            <span style="font-size: 0.85rem; font-weight: normal; opacity: 0.8; margin-left: 10px;">
+                                <i class="fa-solid fa-share-nodes"></i> Profile Shared
+                            </span>
+                        {% endif %}
+                    </h2>
+                    <p>
+                        {{ profile.program or 'Program not set' }} · 
+                        {{ profile.year_of_study or 'Year not set' }} · 
+                        ID {{ profile.student_number or 'Not set' }}
+                    </p>
+                </div>
+            </div>
+
+            {% if is_owner %}
+            <div id="editProfileForm" class="form-card hidden" style="margin-bottom: 1.5rem;">
+                <h3>Edit Profile Information</h3>
+                <form action="{{ url_for('profile') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="form-row">
+                        <div class="input-group"><label>Student Number</label><input type="text" name="student_number" value="{{ profile.student_number }}"></div>
+                        <div class="input-group"><label>Program</label><input type="text" name="program" value="{{ profile.program }}"></div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Year of Study</label>
+                            <select name="year_of_study">
+                                <option value="">Select Year</option>
+                                {% for year in ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Postgraduate', 'Other'] %}
+                                    <option value="{{ year }}" {{ 'selected' if profile.year_of_study == year }}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Expected Graduation (YYYY)</label><input type="text" name="expected_graduation" value="{{ profile.expected_graduation }}" maxlength="4"></div>
+                    </div>
+                    
+                    <div class="input-group"><label>Enrollment Date</label><input type="date" name="enrollment_date" value="{{ profile.enrollment_date }}"></div>
+                    
+                    <div class="input-group"><label>Bio</label><textarea name="bio" rows="3">{{ profile.bio }}</textarea></div>
+                    
+                    <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px; background: #f9fafb; padding: 1rem; border-radius: 8px; border: 1px solid var(--au-border);">
+                        <input type="checkbox" name="profile_shared" id="share" {{ 'checked' if profile.profile_shared }} style="width: auto; cursor: pointer;">
+                        <label for="share" style="margin-bottom: 0; cursor: pointer;">Allow authorized staff to view my profile and verified achievements</label>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" style="margin-top: 10px;">Save Changes</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="profile-strength">
+                <h3>Profile strength <span style="float: right;">{{ profile_strength }}%</span></h3>
+                <div class="strength-bar-bg"><div class="strength-bar-fill" style="width: {{ profile_strength }}%;"></div></div>
+                <p style="margin-top: 10px; color: #d1d5db; font-size: 0.9rem;">Complete all profile fields to reach 100%.</p>
+            </div>
+
+            <h3 style="margin-bottom: 1rem; margin-top: 2rem;">Recent Verified Achievements</h3>
+            <div class="achievements-list">
+                {% if not recent_achievements %}
+                    <p style="color: var(--au-muted);">No verified achievements yet.</p>
+                {% endif %}
+                {% for ach in recent_achievements %}
+                <div class="achievement-card">
+                    <div class="card-icon verified-icon"><i class="fa-solid fa-bookmark"></i></div>
+                    <div class="card-content">
+                        <div class="card-title-row"><h3>{{ ach.title }}</h3><span class="badge verified">VERIFIED</span></div>
+                        <div class="meta">{{ ach.organization }} · {{ ach.achievement_date | date_label }}</div>
+                        <p class="desc">{{ ach.description }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AU StudentSphere - Achievements</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <!-- FIXED LOGO PATH -->
+            <img src="{{ url_for('static', filename='images/africa-university-logo.png') }}" alt="AU Logo" class="brand-logo">
+            <div class="brand-text">
+                <strong>Student<br>Sphere</strong>
+                <span>VERIFIED RECORD</span>
+            </div>
+        </div>
+
+        <div class="user-role-card">
+            <span class="label">VIEWING AS</span>
+            <strong>{{ current_user.role | capitalize }}</strong>
+        </div>
+
+        <nav class="nav-menu">
+            <span class="label">WORKSPACE</span>
+            {% if current_user.role == 'student' %}
+                <a href="{{ url_for('profile') }}" class="nav-item"><i class="fa-regular fa-user"></i> My profile</a>
+            {% endif %}
+            <a href="{{ url_for('index') }}" class="nav-item active"><i class="fa-solid fa-award"></i> Achievements</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="avatar">{{ current_user.name[:2] | upper }}</div>
+                <div class="user-details">
+                    <strong>{{ current_user.name }}</strong>
+                    <span>{{ current_user.email }}</span>
+                </div>
+            </div>
+            <form action="{{ url_for('logout') }}" method="POST" style="margin-top: 10px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="nav-item" style="background:none; border:none; width:100%; text-align:left; cursor:pointer;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign out
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div class="header-actions">
+                <button class="icon-btn"><i class="fa-regular fa-bell"></i><span class="notification-dot"></span></button>
+            </div>
+        </header>
+
+        <div class="content-wrapper">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if error %}
+                <div class="error-message">{{ error }}</div>
+            {% endif %}
+
+            <div class="page-header">
+                <div>
+                    <span class="overline">MY RECORD</span>
+                    <h1>Achievements</h1>
+                    <p class="subtitle">Awards, honors, and recognition earned throughout your studies.</p>
+                </div>
+                {% if current_user.role == 'student' %}
+                    <button class="btn-primary" onclick="document.getElementById('addForm').classList.toggle('hidden')">
+                        <i class="fa-solid fa-plus"></i> Add new
+                    </button>
+                {% endif %}
+            </div>
+
+            <div class="filters">
+                <a href="{{ url_for('index', status='All') }}" class="filter-btn {{ 'active' if selected_status == 'All' }}">All records</a>
+                <a href="{{ url_for('index', status='Verified') }}" class="filter-btn {{ 'active' if selected_status == 'Verified' }}">Verified</a>
+                <a href="{{ url_for('index', status='Pending') }}" class="filter-btn {{ 'active' if selected_status == 'Pending' }}">Pending</a>
+                <a href="{{ url_for('index', status='Rejected') }}" class="filter-btn {{ 'active' if selected_status == 'Rejected' }}">Rejected</a>
+            </div>
+
+            {% if current_user.role == 'student' %}
+            <div id="addForm" class="form-card hidden" style="margin-bottom: 2rem;">
+                <h3>Submit New Achievement</h3>
+                <form action="{{ url_for('add_achievement') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-row">
+                        <div class="input-group"><label>Title *</label><input type="text" name="title" required maxlength="120"></div>
+                        <div class="input-group"><label>Issuing Organization</label><input type="text" name="organization" maxlength="120"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group"><label>Date Earned *</label><input type="date" name="date" required max="{{ today }}"></div>
+                        <div class="input-group">
+                            <label>Category *</label>
+                            <select name="category" required>
+                                {% for cat in categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Classification *</label>
+                            <select name="tier" required>
+                                <option value="Major">Major</option><option value="Moderate">Moderate</option><option value="Minor" selected>Minor</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Recognition Scope *</label>
+                            <select name="recognition_scope" required>
+                                <option value="University">University</option><option value="Local">Local</option><option value="National">National</option><option value="International">International</option><option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Description *</label>
+                        <textarea name="description" rows="3" required maxlength="1200"></textarea>
+                        <!-- ADDED PRIVACY WARNING -->
+                        <small style="color: var(--au-muted); margin-top: 5px; display: block;"><i class="fa-solid fa-circle-info"></i> Do not include sensitive personal details or disciplinary records.</small>
+                    </div>
+                    <div class="input-group"><label>Supporting Evidence (Optional)</label><input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png"></div>
+                    <button type="submit" class="btn-primary">Submit for Verification</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="achievements-list">
+                {% if not achievements %}
+                    <p style="color: var(--au-muted);">No {{ selected_status | lower }} records found.</p>
+                {% endif %}
+
+                {% for ach in achievements %}
+                <div class="achievement-card">
+                    {% if ach.status == 'Verified' %}
+                        <div class="card-icon verified-icon"><i class="fa-solid fa-bookmark"></i></div>
+                    {% elif ach.status == 'Rejected' %}
+                        <div class="card-icon rejected-icon"><i class="fa-solid fa-xmark"></i></div>
+                    {% else %}
+                        <div class="card-icon pending-icon"><i class="fa-solid fa-certificate"></i></div>
+                    {% endif %}
+                    
+                    <div class="card-content">
+                        <div class="card-title-row">
+                            <h3>{{ ach.title }}</h3>
+                            <span class="badge {{ ach.status | lower }}">{{ ach.status | upper }}</span>
+                        </div>
+                        <div class="meta">
+                            {{ ach.organization }} · {{ ach.date | date_label }} | <strong>{{ ach.tier }} Weight</strong>
+                            {% if current_user.role != 'student' %} | Student: {{ ach.student_name }}{% endif %}
+                        </div>
+                        <p class="desc">{{ ach.description }}</p>
+                        
+                        {% if ach.evidence %}
+                            <a href="{{ url_for('evidence', filename=ach.evidence.filename) }}" class="evidence-link" target="_blank">
+                                <i class="fa-solid fa-paperclip"></i> View Evidence
+                            </a>
+                        {% endif %}
+
+                        {% if ach.status == 'Rejected' and ach.rejection_reason %}
+                            <div class="rejection-box"><strong>Reason:</strong> {{ ach.rejection_reason }}</div>
+                        {% endif %}
+
+                        {% if ach.proposed_changes %}
+                            <div class="rejection-box" style="background: #fef3c7; color: #92400e; border-color: #d97706;">
+                                <strong>Correction Requested:</strong> Waiting for staff review.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if current_user.role == 'student' and ach.status in ['Pending', 'Verified'] %}
+                    <div class="action-buttons">
+                        <button class="edit-btn" onclick="document.getElementById('edit-form-{{ ach.id }}').classList.toggle('hidden')" title="Edit"><i class="fa-solid fa-pencil"></i></button>
+                        
+                        {% if not ach.delete_requested %}
+                        <form action="{{ url_for('request_deletion', achievement_id=ach.id) }}" method="POST" onsubmit="return confirm('Request deletion of this achievement?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="edit-btn" style="color: var(--au-red);" title="Request Deletion"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if current_user.role == 'student' and ach.status in ['Pending', 'Verified'] %}
+                <div id="edit-form-{{ ach.id }}" class="form-card hidden" style="margin-top: -10px; margin-bottom: 20px; border-top-left-radius: 0; border-top-right-radius: 0;">
+                    <h4>Edit Achievement</h4>
+                    <form action="{{ url_for('edit_achievement', achievement_id=ach.id) }}" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-row">
+                            <div class="input-group"><label>Title</label><input type="text" name="title" value="{{ ach.title }}" required></div>
+                            <div class="input-group"><label>Organization</label><input type="text" name="organization" value="{{ ach.organization }}"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="input-group"><label>Date</label><input type="date" name="date" value="{{ ach.date }}" required max="{{ today }}"></div>
+                            <div class="input-group">
+                                <label>Category</label>
+                                <select name="category">
+                                    {% for cat in categories %}
+                                        <option value="{{ cat }}" {{ 'selected' if ach.category == cat }}>{{ cat }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Tier</label>
+                                <select name="tier">
+                                    <option value="Major" {{ 'selected' if ach.tier == 'Major' }}>Major</option>
+                                    <option value="Moderate" {{ 'selected' if ach.tier == 'Moderate' }}>Moderate</option>
+                                    <option value="Minor" {{ 'selected' if ach.tier == 'Minor' }}>Minor</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Scope</label>
+                                <select name="recognition_scope">
+                                    {% for scope in ['University', 'Local', 'National', 'International', 'Other'] %}
+                                        <option value="{{ scope }}" {{ 'selected' if ach.recognition_scope == scope }}>{{ scope }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group"><label>Description</label><textarea name="description" rows="2" required>{{ ach.description }}</textarea></div>
+                        <div class="input-group"><label>Replace Evidence (Optional)</label><input type="file" name="evidence"></div>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                {% if current_user.role in ['lecturer', 'administrator'] %}
+                    {% if ach.status == 'Pending' or ach.proposed_changes or ach.delete_requested %}
+                    <div class="form-card" style="margin-top: -10px; margin-bottom: 20px; background: #f9fafb; border-top-left-radius: 0; border-top-right-radius: 0;">
+                        <h4>Review Action</h4>
+                        
+                        {% if ach.proposed_changes %}
+                            <p style="font-size: 0.9rem; margin-bottom: 10px;"><strong>Proposed Changes:</strong> {{ ach.proposed_changes.title }} ({{ ach.proposed_changes.category }})</p>
+                            <form action="{{ url_for('review_achievement', achievement_id=ach.id) }}" method="POST" style="display:flex; gap: 10px;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" name="action" value="approve_changes" class="btn-primary" style="padding: 0.5rem;">Approve Changes</button>
+                                <input type="text" name="reason" placeholder="Reason for rejection..." style="flex-grow:1;">
+                                <button type="submit" name="action" value="reject_changes" class="btn-outline" style="color:var(--au-red);">Reject Changes</button>
+                            </form>
+                        {% elif ach.delete_requested %}
+                            <form action="{{ url_for('review_achievement', achievement_id=ach.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" name="action" value="approve_deletion" class="btn-primary" style="background: var(--au-red);">Approve Deletion</button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('review_achievement', achievement_id=ach.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="form-row">
+                                    <input type="text" name="reason" placeholder="Reason (Required for rejection)">
+                                    <select name="tier">
+                                        <option value="">Keep Current Tier</option>
+                                        <option value="Major">Major</option><option value="Moderate">Moderate</option><option value="Minor">Minor</option>
+                                    </select>
+                                </div>
+                                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                                    <button type="submit" name="action" value="verify" class="btn-primary" style="padding: 0.5rem;">Verify</button>
+                                    <button type="submit" name="action" value="reject" class="btn-outline" style="padding: 0.5rem; color: var(--au-red);">Reject</button>
+                                </div>
+                            </form>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+</body>
+</html>
